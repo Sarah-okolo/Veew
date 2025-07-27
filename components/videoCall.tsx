@@ -18,12 +18,14 @@ import { Mic, MicOff, Video, VideoOff, PhoneOff, SquaresUnite, Captions, Caption
 import LiveCaption from "./liveCaption";
 import { toast } from "sonner"
 import { useLiveCaptions } from '../hooks/useLiveCaptions';
+import AgoraRTC from "agora-rtc-react";
+
 
 
 type VideoCallProps = {
   channelName: string;
   roomUserName: string;
-  client: any;
+  client: ReturnType<typeof AgoraRTC.createClient>;
   onCallEnd?: () => void; // Optional callback when call ends
 };
 
@@ -31,15 +33,13 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, roomUserName, client
   const remoteUsers = useRemoteUsers();
   const isConnected = useIsConnected();
   const {isListening, startTranscription, stopTranscription, } = useLiveCaptions();
-
-
   
   // Call state
   const [calling, setCalling] = useState(false);
   const [micOn, setMic] = useState(true);
   const [cameraOn, setCamera] = useState(true);
   const [token, setToken] = useState<string | null>(null);
-  const [isLoadingToken, setIsLoadingToken] = useState(true);
+  const [_isLoadingToken, setIsLoadingToken] = useState(true);
   const [captionOn, setCaptionOn] = useState(false);
   
   // Local tracks
@@ -179,9 +179,7 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, roomUserName, client
   });
 
   useEffect(() => {
-    
     if(isConnected) {
-      console.log(`🔰🎊Connected: ${isConnected} - Joined channel: ${channelName} as ${roomUserName}`);
       playUserJoinedSound();
     }
   }, [isConnected]);
@@ -194,7 +192,7 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, roomUserName, client
         toast.success( "Invite link copied to clipboard!")
         console.log("COPIEDDD🎊🎊🎊🎊🎊")
       })
-      .catch((err) => {
+      .catch(() => {
         toast.error( "Failed to copy invite link" )
       });
   }

@@ -1,11 +1,14 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { motion } from "framer-motion";
 
 
 function TextChanger() {
    const [titleNumber, setTitleNumber] = useState(0);
-  const titles = ["amazing", "new", "wonderful", "beautiful", "smart"];
+   const titles = useMemo(
+    () => ["amazing", "new", "wonderful", "beautiful", "smart"],
+    []
+  );
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {

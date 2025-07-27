@@ -22,7 +22,7 @@ interface Speaker {
   totalMessages: number;
 }
 
-type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'disconnecting' | 'error';
+// type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'disconnecting' | 'error';
 
 const LiveCaptions: React.FC<LiveCaptionsProps> = ({ className = '', maxCaptions = 5 }) => {
   const {
@@ -32,23 +32,20 @@ const LiveCaptions: React.FC<LiveCaptionsProps> = ({ className = '', maxCaptions
     error,
     connectionStatus,
     startTranscription,
-    stopTranscription,
-    clearTranscripts,
+    // stopTranscription,
+    // clearTranscripts,
     getOrderedTranscripts,
     getCurrentPartial
   } = useLiveCaptions();
 
-  const [showSpeakers, setShowSpeakers] = useState<boolean>(false);
+  const [showSpeakers, _setShowSpeakers] = useState<boolean>(false);
 
   useEffect(() => {
     // Automatically start transcription when component mounts
     if (isConnected && !isListening) {
       startTranscription();
     }
-    if (!isListening) {
-      console.log('📢📢📢Starting live captions...', speakers);
-    }
-  }, [isListening, startTranscription]);
+  }, [isConnected, isListening, startTranscription]);
 
   const orderedTranscripts: Transcript[] = getOrderedTranscripts();
   const currentPartial: Transcript | null = getCurrentPartial();
@@ -66,26 +63,6 @@ const LiveCaptions: React.FC<LiveCaptionsProps> = ({ className = '', maxCaptions
     ];
     const speakerNum = speaker ? parseInt(speaker.replace(/\D/g, '')) || 0 : 0;
     return colors[speakerNum % colors.length];
-  };
-
-  const getStatusColor = (): string => {
-    switch (connectionStatus) {
-      case 'connected': return 'text-green-600';
-      case 'connecting': return 'text-yellow-600';
-      case 'disconnecting': return 'text-orange-600';
-      case 'error': return 'text-red-600';
-      default: return 'text-gray-600';
-    }
-  };
-
-  const getStatusText = (): string => {
-    switch (connectionStatus) {
-      case 'connected': return isListening ? 'Live' : 'Connected';
-      case 'connecting': return 'Connecting...';
-      case 'disconnecting': return 'Disconnecting...';
-      case 'error': return 'Error';
-      default: return 'Disconnected';
-    }
   };
 
   return (

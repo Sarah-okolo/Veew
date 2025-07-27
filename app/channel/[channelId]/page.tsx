@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import AgoraRTC, { AgoraRTCProvider } from "agora-rtc-react";
 import VideoCall from "@/components/videoCall";
@@ -8,7 +8,6 @@ import VideoCall from "@/components/videoCall";
 export default function ChannelPage() {
   const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
   const params = useParams();
-  const router = useRouter();
   const channelId = params?.channelId as string;
   const [roomUserName, setRoomUserName] = useState("");
   const [openDialog, setOpenDialog] = useState(false);
