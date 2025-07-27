@@ -1,0 +1,1 @@
+export const ASSEMBLYAI_API_KEY= process.env.NEXT_PUBLIC_ASSEMBLYAI_API_KEY as string;
