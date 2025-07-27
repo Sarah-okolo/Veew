@@ -1,5 +1,5 @@
 // app/api/token/route.ts
-import { RtcTokenBuilder, RtcRole } from 'agora-access-token';
+import { RtcTokenBuilder, RtcRole } from 'agora-token';
 import { NextRequest } from 'next/server';
 
 export async function POST(request: NextRequest) {

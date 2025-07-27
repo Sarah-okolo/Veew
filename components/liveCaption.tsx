@@ -29,8 +29,8 @@ const LiveCaptions: React.FC<LiveCaptionsProps> = ({ className = '', maxCaptions
     isConnected,
     isListening,
     speakers,
-    error,
-    connectionStatus,
+    // error,
+    // connectionStatus,
     startTranscription,
     // stopTranscription,
     // clearTranscripts,
@@ -118,15 +118,6 @@ const LiveCaptions: React.FC<LiveCaptionsProps> = ({ className = '', maxCaptions
             <p className="text-white text-lg leading-relaxed opacity-80">
               {currentPartial.text}
               <span className="animate-pulse ml-1">|</span>
-            </p>
-          </div>
-        )}
-
-        {/* Empty State */}
-        {!isListening && recentTranscripts.length === 0 && !currentPartial && (
-          <div className="flex items-center justify-center h-32">
-            <p className="text-gray-400 text-center">
-              Click "Start Captions" to begin live transcription
             </p>
           </div>
         )}
