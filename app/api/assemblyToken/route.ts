@@ -14,8 +14,8 @@ export async function GET(): Promise<NextResponse> {
     });
 
     return NextResponse.json({ token: response.data.token });
-  } catch (error: any) {
-    console.error("Error generating temp token:", error.response?.data || error.message);
+  } catch  {
+    console.error("Error generating temp token");
     return NextResponse.json(
       { error: "Failed to fetch token" }, 
       { status: 500 }
