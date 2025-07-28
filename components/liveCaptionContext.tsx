@@ -152,7 +152,7 @@ export const LiveCaptionsProvider = ({ children, currentSpeakerRef, speakerMapRe
               speakerMapRef.current[speakerId] = String(currentSpeakerRef.current);
             }
             const mappedUid = speakerMapRef?.current[speakerId];
-            const speakerLabel = mappedUid !== undefined ? `User ${mappedUid}` : `Speaker ${speakerId}`;
+            const speakerLabel = mappedUid !== undefined ? `User ${mappedUid}` : `${speakerId}`;
 
             const timestamp = new Date(message.created || Date.now()).toLocaleTimeString();
             const transcriptId = message.id || Date.now().toString();

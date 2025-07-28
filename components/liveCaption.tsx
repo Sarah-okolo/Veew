@@ -16,7 +16,7 @@ const LiveCaptions: React.FC = () => {
 
   // Get speaker and text from either partial or final
   const speaker = currentPartial?.speaker || latestFinal?.speaker || '';
-  const text = currentPartial?.text || latestFinal?.text || '';
+  let text = currentPartial?.text || latestFinal?.text || '';
   const showCaption = Boolean(text);
 
   useEffect(() => {
@@ -26,6 +26,7 @@ const LiveCaptions: React.FC = () => {
       return () => clearTimeout(timeout);
     } else {
       setDisplay(false);
+      text = ''; // Clear text if no caption to show
     }
   }, [showCaption, text]);
 
