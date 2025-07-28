@@ -9,3 +9,8 @@ export const playUserLeftSound = () => {
   const audio = new Audio("/user-left.wav");
   audio.play().catch((err) => console.error("Failed to play sound:", err));
 };
+
+export const playRecordStartSound = () => {
+  const audio = new Audio("/record-minutes.wav");
+  audio.play().catch((err) => console.error("Failed to play sound:", err));
+};

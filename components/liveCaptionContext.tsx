@@ -112,25 +112,24 @@ export const LiveCaptionsProvider = ({ children }: { children: ReactNode }) => {
       };
 
       socket.current.onmessage = (event) => {
-  console.log("⬅️⬅️⬅️ AssemblyAI says:", event.data);
-  try {
-    const message = JSON.parse(event.data);
+        try {
+          const message = JSON.parse(event.data);
 
-    // For partials (live caption)
-    if (message.type === 'PartialTranscript') {
-      const { text, speaker, created } = message;
-      const timestamp = new Date(created || Date.now()).toLocaleTimeString();
-      setPartialTranscript({
-        text: text || '',
-        speaker: speaker || 'Unknown',
-        timestamp,
-        type: 'partial'
-      });
-      return; // done
-    }
+          // For partials (live caption)
+          if (message.type === 'PartialTranscript') {
+            const { text, speaker, created } = message;
+            const timestamp = new Date(created || Date.now()).toLocaleTimeString();
+            setPartialTranscript({
+              text: text || '',
+              speaker: speaker || 'Unknown',
+              timestamp,
+              type: 'partial'
+            });
+            return; // done
+          }
 
-    // For final full sentences (confirmed speaker turn)
-    if (message.type === 'Turn' || message.message_type === 'FinalTranscript') {
+          // For final full sentences (confirmed speaker turn)
+          if (message.type === 'Turn' || message.message_type === 'FinalTranscript') {
             const transcriptText = message.transcript || message.text || '';
             const speaker = message.speaker || 'Unknown';
             const timestamp = new Date(message.created || Date.now()).toLocaleTimeString();

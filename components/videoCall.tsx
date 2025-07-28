@@ -13,7 +13,7 @@ import {
 } from "agora-rtc-react";
 import React, { useState, useEffect, useCallback } from "react";
 import { AGORA_APP_ID } from "@/lib/agoraConfig";
-import { playUserJoinedSound, playUserLeftSound } from "@/utils/sounds";
+import { playUserJoinedSound, playUserLeftSound, playRecordStartSound } from "@/utils/sounds";
 import { Mic, MicOff, Video, VideoOff, PhoneOff, Captions, CaptionsOff, Link, PencilLine, PencilOff } from "lucide-react";
 import LiveCaption from "./liveCaption";
 import { toast } from "sonner"
@@ -47,6 +47,9 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, roomUserName, client
   const [cameraOn, setCamera] = useState(true);
   const [token, setToken] = useState<string | null>(null);
   const [_isLoadingToken, setIsLoadingToken] = useState(true);
+  const [recordingStartTime, setRecordingStartTime] = useState<number | null>(null);
+  const [elapsedTime, setElapsedTime] = useState('00:00');
+
   
   // Local tracks
   const { localMicrophoneTrack } = useLocalMicrophoneTrack(micOn);
@@ -103,6 +106,24 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, roomUserName, client
       setCalling(false);
     };
   }, [channelName, roomUserName]);
+
+  
+  useEffect(() => {
+    if (!recordingStartTime) return;
+
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const seconds = Math.floor((now - recordingStartTime) / 1000);
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = seconds % 60;
+      setElapsedTime(
+        `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`
+      );
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [recordingStartTime]);
+
 
   // Toggle audio track
   const toggleAudio = useCallback(async () => {
@@ -227,16 +248,19 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, roomUserName, client
 
 
   const recordMinutes = () => {
-  if (minutesInSession) {
-    // We're stopping the session
-    setMinutesInSession(false);
-    downloadMinutes();
-  } else {
-    // Start new session
-    setMinutesBuffer([]); // reset
-    setMinutesInSession(true);
-  }
-};
+    if (minutesInSession) {
+      // Stop session
+      setMinutesInSession(false);
+      downloadMinutes();
+      setRecordingStartTime(null); // reset
+    } else {
+      // Start session
+      setMinutesBuffer([]);
+      setMinutesInSession(true);
+      setRecordingStartTime(Date.now()); // mark start time
+      playRecordStartSound(); // play sound
+    }
+  };
 
   
 
@@ -254,8 +278,15 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, roomUserName, client
           <div>
             <span>Participants: {remoteUsers.length + 1}</span>
              { minutesInSession && (
-                <span className="ml-4 text-purple-500 animate-pulse flex gap-1 items-center"><PencilLine size={12}/>Recording Minutes </span>
-             )}
+                <span className="ml-4 text-purple-500 animate-pulse flex gap-2 items-center">
+                  <PencilLine size={12} />
+                  Recording Minutes:
+                  <span className="font-mono text-sm">
+                    {elapsedTime}
+                  </span>
+                </span>
+              )}
+
           </div>
         </div>
       </div>
