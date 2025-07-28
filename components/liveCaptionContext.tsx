@@ -57,7 +57,7 @@ export const LiveCaptionsProvider = ({ children }: { children: ReactNode }) => {
       const response = await fetch('/api/assemblyToken');
       const data = await response.json();
       return data.token || null;
-    } catch (err) {
+    } catch {
       setError('Failed to fetch token');
       return null;
     }
@@ -97,7 +97,7 @@ export const LiveCaptionsProvider = ({ children }: { children: ReactNode }) => {
         const view = new DataView(buffer);
 
         for (let i = 0; i < input.length; i++) {
-          let s = Math.max(-1, Math.min(1, input[i]));
+          const s = Math.max(-1, Math.min(1, input[i]));
           view.setInt16(i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true); // little-endian
         }
 
