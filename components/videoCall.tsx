@@ -39,6 +39,7 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, roomUserName, client
     setMinutesInSession,
     minutesBuffer,
     setMinutesBuffer,
+    minutesInSessionRef,
   } = useLiveCaptionsContext();
   
   // Call state
@@ -149,6 +150,46 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, roomUserName, client
     }
   }, [localCameraTrack, cameraOn]);
 
+  
+  const downloadMinutes = () => {
+    console.log("🍒✨🟢📢Downloading minutes")
+    if (minutesBuffer.length === 0) return;
+
+    console.log("🥶🥶Minutes content:", minutesBuffer);
+
+    const content = minutesBuffer
+      .map(t => `[${t.timestamp}] ${t.speaker}: ${t.text}`)
+      .join('\n');
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `meeting-minutes-${Date.now()}.txt`;
+    a.click();
+
+    toast.success("Meeting minutes downloaded successfully!");
+
+    URL.revokeObjectURL(url); // clean up
+  };
+
+
+  const recordMinutes = () => {
+    if (minutesInSession) {
+      // We're stopping the session
+      setMinutesInSession(false);        // ⬅️ UI will update
+      minutesInSessionRef.current = false; // ⬅️ Logic will have latest value
+      downloadMinutes();
+    } else {
+      // Start new session
+      setMinutesBuffer([]); // reset
+      setMinutesInSession(true);         // ⬅️ UI will update
+      minutesInSessionRef.current = true;  // ⬅️ Logic will have latest value
+    }
+  };
+
+
   // End call
   const endCall = useCallback(async () => {
     try {
@@ -161,6 +202,8 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, roomUserName, client
         localCameraTrack.stop();
         localCameraTrack.close();
       }
+
+      downloadMinutes(); // Download minutes if any
       
       // Leave the channel
       await client.leave();
@@ -226,43 +269,6 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, roomUserName, client
     );
   }
 
-  const downloadMinutes = () => {
-    if (minutesBuffer.length === 0) return;
-
-    const content = minutesBuffer
-      .map(t => `[${t.timestamp}] ${t.speaker}: ${t.text}`)
-      .join('\n');
-
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `meeting-minutes-${Date.now()}.txt`;
-    a.click();
-
-    toast.success("Meeting minutes downloaded successfully!");
-
-    URL.revokeObjectURL(url); // clean up
-  };
-
-
-  const recordMinutes = () => {
-    if (minutesInSession) {
-      // Stop session
-      setMinutesInSession(false);
-      downloadMinutes();
-      setRecordingStartTime(null); // reset
-    } else {
-      // Start session
-      setMinutesBuffer([]);
-      setMinutesInSession(true);
-      setRecordingStartTime(Date.now()); // mark start time
-      playRecordStartSound(); // play sound
-    }
-  };
-
-  
 
   return (
     <div className="min-h-screen p-5 bg-gray-900">

@@ -19,7 +19,7 @@ const LiveCaptions: React.FC = () => {
 
   return (
     <div className="">
-      {showCaption && (
+      {showCaption && isListening && (
         <div className="inline-block px-4 py-2 bg-black bg-opacity-70 text-white text-lg rounded shadow-md transition-opacity duration-300">
           {speaker && <div className="text-sm font-semibold text-purple-400 mb-1 uppercase tracking-wide">{speaker}:</div>}
           <div className="inline-block">

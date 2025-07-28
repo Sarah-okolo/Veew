@@ -38,6 +38,7 @@ interface LiveCaptionsContextType {
   setMinutesInSession: (value: boolean) => void;
   minutesBuffer: Transcript[];
   setMinutesBuffer: (buffer: Transcript[]) => void;
+  minutesInSessionRef: React.RefObject<boolean>;
 }
 
 export const LiveCaptionsContext = createContext<LiveCaptionsContextType | undefined>(undefined);
@@ -55,7 +56,8 @@ export const LiveCaptionsProvider = ({ children }: { children: ReactNode }) => {
   const [speakers, setSpeakers] = useState<{ [key: string]: Speaker }>({});
   const [error, setError] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
-   const [minutesInSession, setMinutesInSession] = useState(false);
+  const [minutesInSession, setMinutesInSession] = useState(false);
+  const minutesInSessionRef = useRef<boolean>(false);
   const [minutesBuffer, setMinutesBuffer] = useState<Transcript[]>([]);
 
   const getToken = async (): Promise<string | null> => {
@@ -112,6 +114,8 @@ export const LiveCaptionsProvider = ({ children }: { children: ReactNode }) => {
       };
 
       socket.current.onmessage = (event) => {
+        console.log("⬅️⬅️⬅️ AssemblyAI says:", event.data);
+
         try {
           const message = JSON.parse(event.data);
 
@@ -162,9 +166,10 @@ export const LiveCaptionsProvider = ({ children }: { children: ReactNode }) => {
             }));
 
             // ➕ Also push to minutes buffer if minutesInSession is true
-            if (minutesInSession) {
+            if (minutesInSessionRef.current) {
               setMinutesBuffer(prev => [...prev, finalTranscript]);
             }
+
           }
         } catch (e) {
           console.error('Error parsing message:', e);
@@ -247,6 +252,7 @@ export const LiveCaptionsProvider = ({ children }: { children: ReactNode }) => {
     currentPartial: partialTranscript,
     minutesInSession,
     setMinutesInSession,
+    minutesInSessionRef,
     minutesBuffer,
     setMinutesBuffer
   };
