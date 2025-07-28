@@ -40,7 +40,7 @@ export default function ChannelPage() {
       {roomUserName && !openDialog && 
         <AgoraRTCProvider client={client}>
           <LiveCaptionsProvider currentSpeakerRef={currentSpeakerRef} speakerMapRef={speakerMapRef}>
-            <VideoCall channelName={channelId} roomUserName={roomUserName} client={client} onCallEnd={handleCallEnd} currentSpeakerRef={currentSpeakerRef} speakerMapRef={speakerMapRef}/>
+            <VideoCall channelName={channelId} roomUserName={roomUserName} client={client} onCallEnd={handleCallEnd} currentSpeakerRef={currentSpeakerRef}/>
           </LiveCaptionsProvider>
         </AgoraRTCProvider>
       }

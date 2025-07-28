@@ -27,10 +27,9 @@ type VideoCallProps = {
   client: ReturnType<typeof AgoraRTC.createClient>;
   onCallEnd?: () => void; // Optional callback when call ends
   currentSpeakerRef: React.RefObject<string | number | null>;
-  speakerMapRef: React.RefObject<{ [speakerId: string]: string }>;
 };
 
-const VideoCall: React.FC<VideoCallProps> = ({ currentSpeakerRef, speakerMapRef, channelName, roomUserName, client, onCallEnd }) => {
+const VideoCall: React.FC<VideoCallProps> = ({ currentSpeakerRef, channelName, roomUserName, client, onCallEnd }) => {
   const remoteUsers = useRemoteUsers();
   const isConnected = useIsConnected();
    const {
@@ -233,7 +232,7 @@ const VideoCall: React.FC<VideoCallProps> = ({ currentSpeakerRef, speakerMapRef,
         onCallEnd();
       }
     }
-  }, [localMicrophoneTrack, localCameraTrack, client, onCallEnd]);
+  }, [localMicrophoneTrack, localCameraTrack, client, onCallEnd, downloadMinutes]);
 
   // Listen for user events
   useClientEvent(client, "user-joined", (user) => {

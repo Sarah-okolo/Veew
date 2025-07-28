@@ -140,7 +140,7 @@ export const LiveCaptionsProvider = ({ children, currentSpeakerRef, speakerMapRe
           // ✅ Handle final confirmed transcript (Turn or FinalTranscript)
           if (message.type === 'Turn' || message.message_type === 'FinalTranscript') {
             const transcriptText = message.transcript || message.text || '';
-            let speakerId = message.speaker?.toString() || 'Unknown';
+            const speakerId = message.speaker?.toString() || 'Unknown';
             // Assign Agora uid if this speakerId is new
             if (
               speakerId !== 'Unknown' &&
