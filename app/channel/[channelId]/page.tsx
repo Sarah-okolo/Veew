@@ -35,6 +35,8 @@ export default function ChannelPage() {
     window.location.href = "/"; // Redirect to home
   };
 
+
+
   return (
     <main>
       {roomUserName && !openDialog && 

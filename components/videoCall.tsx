@@ -111,7 +111,7 @@ const VideoCall: React.FC<VideoCallProps> = ({ currentSpeakerRef, channelName, r
   client.on('volume-indicator', (volumes) => {
     volumes.forEach((vol) => {
       const { uid, level } = vol;
-      if (level > 10) {
+      if (level > 25) {
         currentSpeakerRef.current = uid;
       }
     });
@@ -161,11 +161,7 @@ const VideoCall: React.FC<VideoCallProps> = ({ currentSpeakerRef, channelName, r
 
   
   const downloadMinutes = () => {
-    console.log("🍒✨🟢📢Downloading minutes")
     if (minutesBuffer.length === 0) return;
-
-    console.log("🥶🥶Minutes content:", minutesBuffer);
-
     const content = minutesBuffer
       .map(t => `[${t.timestamp}] ${t.speaker}: ${t.text}`)
       .join('\n');

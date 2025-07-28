@@ -76,6 +76,7 @@ export const LiveCaptionsProvider = ({ children, currentSpeakerRef, speakerMapRe
       return null;
     }
   };
+
   const startTranscription = useCallback(async () => {
     try {
       setError(null);
@@ -141,6 +142,8 @@ export const LiveCaptionsProvider = ({ children, currentSpeakerRef, speakerMapRe
           if (message.type === 'Turn' || message.message_type === 'FinalTranscript') {
             const transcriptText = message.transcript || message.text || '';
             const speakerId = message.speaker?.toString() || 'Unknown';
+              console.log(`🔥🥶🍒Mapped speakerId ${message.speaker} to Agora uid ${currentSpeakerRef.current}`);
+
             // Assign Agora uid if this speakerId is new
             if (
               speakerId !== 'Unknown' &&

@@ -22,7 +22,7 @@ const LiveCaptions: React.FC = () => {
   useEffect(() => {
     if (showCaption) {
       setDisplay(true);
-      const timeout = setTimeout(() => setDisplay(false), 4000); // Hide after 4 seconds
+      const timeout = setTimeout(() => setDisplay(false), 3000); // Hide after 4 seconds
       return () => clearTimeout(timeout);
     } else {
       setDisplay(false);
