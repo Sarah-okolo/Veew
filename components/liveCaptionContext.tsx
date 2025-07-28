@@ -43,7 +43,13 @@ interface LiveCaptionsContextType {
 
 export const LiveCaptionsContext = createContext<LiveCaptionsContextType | undefined>(undefined);
 
-export const LiveCaptionsProvider = ({ children }: { children: ReactNode }) => {
+interface LiveCaptionsProviderProps {
+  children: ReactNode;
+  currentSpeakerRef: React.RefObject<string | number | null>;
+  speakerMapRef?: React.RefObject<{ [speakerId: string]: string }>;
+}
+
+export const LiveCaptionsProvider = ({ children, currentSpeakerRef, speakerMapRef }: LiveCaptionsProviderProps) => {
   const socket = useRef<WebSocket | null>(null);
   const audioContext = useRef<AudioContext | null>(null);
   const mediaStream = useRef<MediaStream | null>(null);
@@ -70,7 +76,6 @@ export const LiveCaptionsProvider = ({ children }: { children: ReactNode }) => {
       return null;
     }
   };
-
   const startTranscription = useCallback(async () => {
     try {
       setError(null);
@@ -98,19 +103,19 @@ export const LiveCaptionsProvider = ({ children }: { children: ReactNode }) => {
         scriptProcessor.current.connect(audioContext.current.destination);
 
         scriptProcessor.current.onaudioprocess = (event) => {
-        if (!socket.current || socket.current.readyState !== WebSocket.OPEN) return;
+          if (!socket.current || socket.current.readyState !== WebSocket.OPEN) return;
 
-        const input = event.inputBuffer.getChannelData(0);
-        const buffer = new ArrayBuffer(input.length * 2);
-        const view = new DataView(buffer);
+          const input = event.inputBuffer.getChannelData(0);
+          const buffer = new ArrayBuffer(input.length * 2);
+          const view = new DataView(buffer);
 
-        for (let i = 0; i < input.length; i++) {
-          const s = Math.max(-1, Math.min(1, input[i]));
-          view.setInt16(i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true); // little-endian
-        }
+          for (let i = 0; i < input.length; i++) {
+            const s = Math.max(-1, Math.min(1, input[i]));
+            view.setInt16(i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true); // little-endian
+          }
 
-        socket.current.send(buffer);
-      };
+          socket.current.send(buffer);
+        };
       };
 
       socket.current.onmessage = (event) => {
@@ -119,7 +124,7 @@ export const LiveCaptionsProvider = ({ children }: { children: ReactNode }) => {
         try {
           const message = JSON.parse(event.data);
 
-          // For partials (live caption)
+          // ✅ Handle partial transcript (just show live, do not store)
           if (message.type === 'PartialTranscript') {
             const { text, speaker, created } = message;
             const timestamp = new Date(created || Date.now()).toLocaleTimeString();
@@ -129,48 +134,62 @@ export const LiveCaptionsProvider = ({ children }: { children: ReactNode }) => {
               timestamp,
               type: 'partial'
             });
-            return; // done
+            return;
           }
 
-          // For final full sentences (confirmed speaker turn)
+          // ✅ Handle final confirmed transcript (Turn or FinalTranscript)
           if (message.type === 'Turn' || message.message_type === 'FinalTranscript') {
             const transcriptText = message.transcript || message.text || '';
-            const speaker = message.speaker || 'Unknown';
+            let speakerId = message.speaker?.toString() || 'Unknown';
+            // Assign Agora uid if this speakerId is new
+            if (
+              speakerId !== 'Unknown' &&
+              speakerMapRef &&
+              speakerMapRef.current &&
+              !speakerMapRef.current[speakerId] &&
+              currentSpeakerRef.current !== null
+            ) {
+              speakerMapRef.current[speakerId] = String(currentSpeakerRef.current);
+            }
+            const mappedUid = speakerMapRef?.current[speakerId];
+            const speakerLabel = mappedUid !== undefined ? `User ${mappedUid}` : `Speaker ${speakerId}`;
+
             const timestamp = new Date(message.created || Date.now()).toLocaleTimeString();
             const transcriptId = message.id || Date.now().toString();
 
             const finalTranscript: Transcript = {
               text: transcriptText,
-              speaker,
+              speaker: speakerLabel,
               timestamp,
               id: transcriptId,
               type: 'final'
             };
 
-            // Store in full transcript map
+            // Save to transcript list
             setTranscripts(prev => ({
               ...prev,
               [transcriptId]: finalTranscript
             }));
 
-            setPartialTranscript(null); // clear any partials
+            // Clear live partial
+            setPartialTranscript(null);
 
-            // Speaker stats
+            // Update speaker stats
             setSpeakers(prev => ({
               ...prev,
-              [speaker]: {
-                name: `Speaker ${speaker}`,
+              [speakerLabel]: {
+                name: `Speaker ${speakerLabel}`,
                 lastSeen: timestamp,
-                totalMessages: (prev[speaker]?.totalMessages || 0) + 1
+                totalMessages: (prev[speakerLabel]?.totalMessages || 0) + 1
               }
             }));
 
-            // ➕ Also push to minutes buffer if minutesInSession is true
+            // ✅ Append to minutes buffer ONLY if active
             if (minutesInSessionRef.current) {
               setMinutesBuffer(prev => [...prev, finalTranscript]);
             }
-
           }
+
         } catch (e) {
           console.error('Error parsing message:', e);
         }
@@ -187,11 +206,13 @@ export const LiveCaptionsProvider = ({ children }: { children: ReactNode }) => {
         setIsConnected(false);
         setConnectionStatus('disconnected');
       };
+
     } catch (err) {
       console.error('startTranscription error:', err);
       setError('Failed to start transcription');
     }
   }, []);
+
 
   const stopTranscription = useCallback(() => {
     setIsListening(false);

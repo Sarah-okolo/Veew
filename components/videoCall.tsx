@@ -26,9 +26,11 @@ type VideoCallProps = {
   roomUserName: string;
   client: ReturnType<typeof AgoraRTC.createClient>;
   onCallEnd?: () => void; // Optional callback when call ends
+  currentSpeakerRef: React.RefObject<string | number | null>;
+  speakerMapRef: React.RefObject<{ [speakerId: string]: string }>;
 };
 
-const VideoCall: React.FC<VideoCallProps> = ({ channelName, roomUserName, client, onCallEnd }) => {
+const VideoCall: React.FC<VideoCallProps> = ({ currentSpeakerRef, speakerMapRef, channelName, roomUserName, client, onCallEnd }) => {
   const remoteUsers = useRemoteUsers();
   const isConnected = useIsConnected();
    const {
@@ -50,12 +52,10 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, roomUserName, client
   const [_isLoadingToken, setIsLoadingToken] = useState(true);
   const [recordingStartTime, setRecordingStartTime] = useState<number | null>(null);
   const [elapsedTime, setElapsedTime] = useState('00:00');
-
-  
   // Local tracks
   const { localMicrophoneTrack } = useLocalMicrophoneTrack(micOn);
   const { localCameraTrack } = useLocalCameraTrack(cameraOn);
- 
+  
 
   // Join channel and publish tracks
   useJoin(
@@ -89,7 +89,6 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, roomUserName, client
         }
         
         const data = await response.json();
-        console.log('🔥🔥🔥🔥Token fetched:', data);
         setToken(data.token);
         setCalling(true);
 
@@ -107,6 +106,17 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, roomUserName, client
       setCalling(false);
     };
   }, [channelName, roomUserName]);
+
+  client.enableAudioVolumeIndicator();
+
+  client.on('volume-indicator', (volumes) => {
+    volumes.forEach((vol) => {
+      const { uid, level } = vol;
+      if (level > 10) {
+        currentSpeakerRef.current = uid;
+      }
+    });
+  });
 
   
   useEffect(() => {
@@ -240,6 +250,7 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, roomUserName, client
   useClientEvent(client, "connection-state-change", (curState, revState) => {
     console.log(`Connection state changed: ${revState} -> ${curState}`);
   });
+  
 
   useEffect(() => {
     if(isConnected) {

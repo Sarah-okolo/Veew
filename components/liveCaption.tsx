@@ -29,7 +29,7 @@ const LiveCaptions: React.FC = () => {
         </div>
       )}
       {!text && isListening && (
-        <div className="text-center text-sm text-gray-400">Listening...</div>
+        <div className="text-center text-sm text-gray-400 bg-background max-w-max p-1 mx-auto">Listening...</div>
       )}
     </div>
   );

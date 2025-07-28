@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import AgoraRTC, { AgoraRTCProvider } from "agora-rtc-react";
 import VideoCall from "@/components/videoCall";
 import { LiveCaptionsProvider } from "@/components/liveCaptionContext";
@@ -12,6 +12,11 @@ export default function ChannelPage() {
   const channelId = params?.channelId as string;
   const [roomUserName, setRoomUserName] = useState("");
   const [openDialog, setOpenDialog] = useState(false);
+  // To track which Agora uid is speaking
+  const currentSpeakerRef = useRef<string | number | null>(null);
+  // To store AssemblyAI speakerId to Agora uid mapping
+  const speakerMapRef = useRef<{ [speakerId: string]: string }>({});
+
 
   useEffect(() => {
     const stored = localStorage.getItem("roomUserName");
@@ -34,8 +39,8 @@ export default function ChannelPage() {
     <main>
       {roomUserName && !openDialog && 
         <AgoraRTCProvider client={client}>
-          <LiveCaptionsProvider>
-            <VideoCall channelName={channelId} roomUserName={roomUserName} client={client} onCallEnd={handleCallEnd}/>
+          <LiveCaptionsProvider currentSpeakerRef={currentSpeakerRef} speakerMapRef={speakerMapRef}>
+            <VideoCall channelName={channelId} roomUserName={roomUserName} client={client} onCallEnd={handleCallEnd} currentSpeakerRef={currentSpeakerRef} speakerMapRef={speakerMapRef}/>
           </LiveCaptionsProvider>
         </AgoraRTCProvider>
       }
