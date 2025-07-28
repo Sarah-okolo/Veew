@@ -124,7 +124,7 @@ export const LiveCaptionsProvider = ({ children, currentSpeakerRef, speakerMapRe
 
         try {
           const message = JSON.parse(event.data);
-
+          console.log("🟢🟢🟢Parsed message:", message);
           // ✅ Handle partial transcript (just show live, do not store)
           if (message.type === 'PartialTranscript') {
             const { text, speaker, created } = message;
@@ -141,21 +141,8 @@ export const LiveCaptionsProvider = ({ children, currentSpeakerRef, speakerMapRe
           // ✅ Handle final confirmed transcript (Turn or FinalTranscript)
           if (message.type === 'Turn' || message.message_type === 'FinalTranscript') {
             const transcriptText = message.transcript || message.text || '';
-            const speakerId = message.speaker?.toString() || 'Unknown';
-              console.log(`🔥🥶🍒Mapped speakerId ${message.speaker} to Agora uid ${currentSpeakerRef.current}`);
-
-            // Assign Agora uid if this speakerId is new
-            if (
-              speakerId !== 'Unknown' &&
-              speakerMapRef &&
-              speakerMapRef.current &&
-              !speakerMapRef.current[speakerId] &&
-              currentSpeakerRef.current !== null
-            ) {
-              speakerMapRef.current[speakerId] = String(currentSpeakerRef.current);
-            }
-            const mappedUid = speakerMapRef?.current[speakerId];
-            const speakerLabel = mappedUid !== undefined ? `User ${mappedUid}` : `${speakerId}`;
+           
+            const speakerLabel = `${currentSpeakerRef.current}`;
 
             const timestamp = new Date(message.created || Date.now()).toLocaleTimeString();
             const transcriptId = message.id || Date.now().toString();
@@ -169,8 +156,7 @@ export const LiveCaptionsProvider = ({ children, currentSpeakerRef, speakerMapRe
             };
 
             // Save to transcript list
-            setTranscripts(prev => ({
-              ...prev,
+            setTranscripts(() => ({
               [transcriptId]: finalTranscript
             }));
 
@@ -181,7 +167,7 @@ export const LiveCaptionsProvider = ({ children, currentSpeakerRef, speakerMapRe
             setSpeakers(prev => ({
               ...prev,
               [speakerLabel]: {
-                name: `Speaker ${speakerLabel}`,
+                name: speakerLabel,
                 lastSeen: timestamp,
                 totalMessages: (prev[speakerLabel]?.totalMessages || 0) + 1
               }
