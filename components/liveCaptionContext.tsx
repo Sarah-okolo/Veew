@@ -34,6 +34,10 @@ interface LiveCaptionsContextType {
   stopTranscription: () => void;
   getOrderedTranscripts: () => Transcript[];
   currentPartial: Transcript | null;
+  minutesInSession: boolean;
+  setMinutesInSession: (value: boolean) => void;
+  minutesBuffer: Transcript[];
+  setMinutesBuffer: (buffer: Transcript[]) => void;
 }
 
 export const LiveCaptionsContext = createContext<LiveCaptionsContextType | undefined>(undefined);
@@ -51,6 +55,8 @@ export const LiveCaptionsProvider = ({ children }: { children: ReactNode }) => {
   const [speakers, setSpeakers] = useState<{ [key: string]: Speaker }>({});
   const [error, setError] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
+   const [minutesInSession, setMinutesInSession] = useState(false);
+  const [minutesBuffer, setMinutesBuffer] = useState<Transcript[]>([]);
 
   const getToken = async (): Promise<string | null> => {
     try {
@@ -106,48 +112,59 @@ export const LiveCaptionsProvider = ({ children }: { children: ReactNode }) => {
       };
 
       socket.current.onmessage = (event) => {
-         console.log("⬅️⬅️⬅️ AssemblyAI says:", event.data); // ✅ ADD THIS LINE
-        try {
-          const message = JSON.parse(event.data);
+  console.log("⬅️⬅️⬅️ AssemblyAI says:", event.data);
+  try {
+    const message = JSON.parse(event.data);
 
-          if (message.type === 'PartialTranscript') {
-            const { text, speaker, created } = message;
-            const timestamp = new Date(created || Date.now()).toLocaleTimeString();
-            setPartialTranscript({
-              text: text || '',
-              speaker: speaker || 'Unknown',
+    // For partials (live caption)
+    if (message.type === 'PartialTranscript') {
+      const { text, speaker, created } = message;
+      const timestamp = new Date(created || Date.now()).toLocaleTimeString();
+      setPartialTranscript({
+        text: text || '',
+        speaker: speaker || 'Unknown',
+        timestamp,
+        type: 'partial'
+      });
+      return; // done
+    }
+
+    // For final full sentences (confirmed speaker turn)
+    if (message.type === 'Turn' || message.message_type === 'FinalTranscript') {
+            const transcriptText = message.transcript || message.text || '';
+            const speaker = message.speaker || 'Unknown';
+            const timestamp = new Date(message.created || Date.now()).toLocaleTimeString();
+            const transcriptId = message.id || Date.now().toString();
+
+            const finalTranscript: Transcript = {
+              text: transcriptText,
+              speaker,
               timestamp,
-              type: 'partial'
-            });
-          }
+              id: transcriptId,
+              type: 'final'
+            };
 
-          if (message.type === 'Turn') {
-            const { transcript, speaker, created, id } = message;
-            const timestamp = new Date(created || Date.now()).toLocaleTimeString();
-            const transcriptId = id || Date.now().toString();
-
+            // Store in full transcript map
             setTranscripts(prev => ({
               ...prev,
-              [transcriptId]: {
-                text: transcript || '',
-                speaker: speaker || 'Unknown',
-                timestamp,
-                type: 'final',
-                id: transcriptId
+              [transcriptId]: finalTranscript
+            }));
+
+            setPartialTranscript(null); // clear any partials
+
+            // Speaker stats
+            setSpeakers(prev => ({
+              ...prev,
+              [speaker]: {
+                name: `Speaker ${speaker}`,
+                lastSeen: timestamp,
+                totalMessages: (prev[speaker]?.totalMessages || 0) + 1
               }
             }));
 
-            setPartialTranscript(null);
-
-            if (speaker) {
-              setSpeakers(prev => ({
-                ...prev,
-                [speaker]: {
-                  name: `Speaker ${speaker}`,
-                  lastSeen: timestamp,
-                  totalMessages: (prev[speaker]?.totalMessages || 0) + 1
-                }
-              }));
+            // ➕ Also push to minutes buffer if minutesInSession is true
+            if (minutesInSession) {
+              setMinutesBuffer(prev => [...prev, finalTranscript]);
             }
           }
         } catch (e) {
@@ -228,7 +245,11 @@ export const LiveCaptionsProvider = ({ children }: { children: ReactNode }) => {
     startTranscription,
     stopTranscription,
     getOrderedTranscripts,
-    currentPartial: partialTranscript
+    currentPartial: partialTranscript,
+    minutesInSession,
+    setMinutesInSession,
+    minutesBuffer,
+    setMinutesBuffer
   };
 
   

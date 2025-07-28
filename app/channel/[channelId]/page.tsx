@@ -45,7 +45,7 @@ export default function ChannelPage() {
         <div className="h-screen p-10 flex items-center justify-center">
           <div className=" flex items-center flex-col">
             <h1 className="text-2xl font-bold flex justify-center text-center mb-2">Join Room</h1>
-            <p className="text-gray-600 dark:text-gray-900">Enter your display name to join the room.</p>
+            <p className="text-gray-600 dark:text-gray-900">Enter your display name to join the room. If room does not exist, a new room would be created for you.</p>
             <div className="w-80">
               <input
                 type="text"

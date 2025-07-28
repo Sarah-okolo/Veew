@@ -14,7 +14,7 @@ import {
 import React, { useState, useEffect, useCallback } from "react";
 import { AGORA_APP_ID } from "@/lib/agoraConfig";
 import { playUserJoinedSound, playUserLeftSound } from "@/utils/sounds";
-import { Mic, MicOff, Video, VideoOff, PhoneOff, SquaresUnite, Captions, CaptionsOff } from "lucide-react";
+import { Mic, MicOff, Video, VideoOff, PhoneOff, Captions, CaptionsOff, Link, PencilLine, PencilOff } from "lucide-react";
 import LiveCaption from "./liveCaption";
 import { toast } from "sonner"
 import AgoraRTC from "agora-rtc-react";
@@ -34,7 +34,11 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, roomUserName, client
    const {
     isListening,
     startTranscription,
-    stopTranscription
+    stopTranscription,
+    minutesInSession,
+    setMinutesInSession,
+    minutesBuffer,
+    setMinutesBuffer,
   } = useLiveCaptionsContext();
   
   // Call state
@@ -47,7 +51,7 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, roomUserName, client
   // Local tracks
   const { localMicrophoneTrack } = useLocalMicrophoneTrack(micOn);
   const { localCameraTrack } = useLocalCameraTrack(cameraOn);
-
+ 
 
   // Join channel and publish tracks
   useJoin(
@@ -200,6 +204,40 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, roomUserName, client
       </div>
     );
   }
+
+  const downloadMinutes = () => {
+    if (minutesBuffer.length === 0) return;
+
+    const content = minutesBuffer
+      .map(t => `[${t.timestamp}] ${t.speaker}: ${t.text}`)
+      .join('\n');
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `meeting-minutes-${Date.now()}.txt`;
+    a.click();
+
+    toast.success("Meeting minutes downloaded successfully!");
+
+    URL.revokeObjectURL(url); // clean up
+  };
+
+
+  const recordMinutes = () => {
+  if (minutesInSession) {
+    // We're stopping the session
+    setMinutesInSession(false);
+    downloadMinutes();
+  } else {
+    // Start new session
+    setMinutesBuffer([]); // reset
+    setMinutesInSession(true);
+  }
+};
+
   
 
   return (
@@ -213,7 +251,12 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, roomUserName, client
           </p>
         </div>
         <div className="text-sm text-gray-300">
-          Participants: {remoteUsers.length + 1}
+          <div>
+            <span>Participants: {remoteUsers.length + 1}</span>
+             { minutesInSession && (
+                <span className="ml-4 text-purple-500 animate-pulse flex gap-1 items-center"><PencilLine size={12}/>Recording Minutes </span>
+             )}
+          </div>
         </div>
       </div>
 
@@ -321,7 +364,29 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, roomUserName, client
           <button 
             onClick={inviteUser}
             className="rounded-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 flex items-center gap-2 cursor-pointer">
-            <SquaresUnite /> Invite
+            <Link size={20}/> <span className="hidden sm:block">Invite</span>
+          </button>
+
+          <button
+            onClick={recordMinutes}
+            className={`p-3 cursor-pointer rounded-full transition-colors ${
+              minutesInSession 
+                ? 'bg-purple-500 hover:bg-purple-600 text-white' 
+                : 'bg-gray-700 hover:bg-gray-600 text-white'
+            }`}
+            title={minutesInSession ? "Stop recording minutes" : "Start recording minutes"}
+          >
+            {minutesInSession ? 
+            <span className="flex items-center gap-2 animate-pulse">
+             <PencilLine size={20} /> 
+              <span className="hidden sm:block">Recording...</span>
+            </span>
+            : 
+            <span className="flex items-center gap-2">
+              <PencilOff size={20} /> 
+              <span className="hidden sm:block min-w-max">Minutes</span>
+            </span>
+            }
           </button>
         </div>
       </div>
