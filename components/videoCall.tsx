@@ -177,18 +177,20 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, roomUserName, client
 
   const recordMinutes = () => {
     if (minutesInSession) {
-      // We're stopping the session
-      setMinutesInSession(false);        // ⬅️ UI will update
-      minutesInSessionRef.current = false; // ⬅️ Logic will have latest value
+      // Stop session
+      setMinutesInSession(false);
       downloadMinutes();
+      minutesInSessionRef.current = false; // ⬅️ Logic will have latest value
+      setRecordingStartTime(null); // reset
     } else {
-      // Start new session
-      setMinutesBuffer([]); // reset
-      setMinutesInSession(true);         // ⬅️ UI will update
+      // Start session
+      setMinutesBuffer([]);
+      setMinutesInSession(true);
       minutesInSessionRef.current = true;  // ⬅️ Logic will have latest value
+      setRecordingStartTime(Date.now()); // mark start time
+      playRecordStartSound(); // play sound
     }
   };
-
 
   // End call
   const endCall = useCallback(async () => {
