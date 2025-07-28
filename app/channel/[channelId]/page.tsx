@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import AgoraRTC, { AgoraRTCProvider } from "agora-rtc-react";
 import VideoCall from "@/components/videoCall";
+import { LiveCaptionsProvider } from "@/components/liveCaptionContext";
 
 export default function ChannelPage() {
   const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
@@ -33,7 +34,9 @@ export default function ChannelPage() {
     <main>
       {roomUserName && !openDialog && 
         <AgoraRTCProvider client={client}>
-          <VideoCall channelName={channelId} roomUserName={roomUserName} client={client} onCallEnd={handleCallEnd}/>
+          <LiveCaptionsProvider>
+            <VideoCall channelName={channelId} roomUserName={roomUserName} client={client} onCallEnd={handleCallEnd}/>
+          </LiveCaptionsProvider>
         </AgoraRTCProvider>
       }
 

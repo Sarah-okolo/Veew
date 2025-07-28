@@ -17,9 +17,8 @@ import { playUserJoinedSound, playUserLeftSound } from "@/utils/sounds";
 import { Mic, MicOff, Video, VideoOff, PhoneOff, SquaresUnite, Captions, CaptionsOff } from "lucide-react";
 import LiveCaption from "./liveCaption";
 import { toast } from "sonner"
-import { useLiveCaptions } from '../hooks/useLiveCaptions';
 import AgoraRTC from "agora-rtc-react";
-
+import { useLiveCaptionsContext } from "./liveCaptionContext";
 
 
 type VideoCallProps = {
@@ -32,7 +31,11 @@ type VideoCallProps = {
 const VideoCall: React.FC<VideoCallProps> = ({ channelName, roomUserName, client, onCallEnd }) => {
   const remoteUsers = useRemoteUsers();
   const isConnected = useIsConnected();
-  const {isListening, startTranscription, stopTranscription, } = useLiveCaptions();
+   const {
+    isListening,
+    startTranscription,
+    stopTranscription
+  } = useLiveCaptionsContext();
   
   // Call state
   const [calling, setCalling] = useState(false);
@@ -40,7 +43,6 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, roomUserName, client
   const [cameraOn, setCamera] = useState(true);
   const [token, setToken] = useState<string | null>(null);
   const [_isLoadingToken, setIsLoadingToken] = useState(true);
-  const [captionOn, setCaptionOn] = useState(false);
   
   // Local tracks
   const { localMicrophoneTrack } = useLocalMicrophoneTrack(micOn);
@@ -109,15 +111,6 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, roomUserName, client
       console.error("Error toggling audio:", error);
     }
   }, [localMicrophoneTrack, micOn]);
-
-  const toggleCaption = useCallback(() => {
-    if (isListening) {
-      stopTranscription();
-    } else {
-      startTranscription();
-    }
-    setCaptionOn(!captionOn);
-  }, [isListening, startTranscription, stopTranscription, captionOn]);
 
   // Toggle video track
   const toggleVideo = useCallback(async () => {
@@ -190,7 +183,6 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, roomUserName, client
     navigator.clipboard.writeText(inviteLink)
       .then(() => {
         toast.success( "Invite link copied to clipboard!")
-        console.log("COPIEDDD🎊🎊🎊🎊🎊")
       })
       .catch(() => {
         toast.error( "Failed to copy invite link" )
@@ -272,26 +264,26 @@ const VideoCall: React.FC<VideoCallProps> = ({ channelName, roomUserName, client
             </div>
           )}
         </div>
-
-        {/* Live Captions */}
-        <div className="mt-4">
-          <LiveCaption />
-        </div>
       </div>
 
       {/* Controls */}
       <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2">
+        {/* Live Captions */}
+        <div className="mb-3 w-full max-w-3xl px-4 z-50">
+          <LiveCaption />
+        </div>
+
         <div className="flex gap-4 bg-white/10 backdrop-blur-md py-3 px-6 rounded-full">
           <button
-            onClick={toggleCaption}
+            onClick={() => isListening ? stopTranscription() : startTranscription()}
             className={`p-3 cursor-pointer rounded-full transition-colors ${
-              micOn 
-                ? 'bg-gray-700 hover:bg-gray-600 text-white' 
+              isListening 
+                ? 'bg-gray-700 hover:bg-gray-600 text-green-400' 
                 : 'bg-red-500 hover:bg-red-600 text-white'
             }`}
-            title={captionOn ? "Turn off live caption" : "Turn on live caption"}
+            title={isListening ? "Turn off live caption" : "Turn on live caption"}
           >
-            {micOn ? <Captions size={20} /> : <CaptionsOff size={20} />}
+            {isListening ? <Captions size={20} /> : <CaptionsOff size={20} />}
           </button>
 
           <button
